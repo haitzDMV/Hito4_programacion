@@ -20,4 +20,8 @@ public class Fotografias {
     public String getArchivo() {
         return archivo;
     }
+
+    public int getIdFoto() {
+        return idFoto;
+    }
 }

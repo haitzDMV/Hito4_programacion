@@ -31,13 +31,6 @@ public class VisualizadorFotos extends JFrame {
         }
 
 
-
-        fotografos.add(jlfotografos);
-        fotografos.add(jcfotografos);
-        jFrame.add(fotografos);
-
-
-
         //Jpanel donde estará el calendario
         JPanel fecha = new JPanel();
         JLabel jlfotos = new JLabel("Photos after:");
@@ -57,14 +50,7 @@ public class VisualizadorFotos extends JFrame {
                 }
             }
         };
-
         date.addActionListener(l);
-
-
-        fecha.add(jlfotos);
-        fecha.add(date);
-        jFrame.add(fecha);
-
 
 
         //JPanel para la lista de las fotografias
@@ -75,10 +61,6 @@ public class VisualizadorFotos extends JFrame {
         jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(jList);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
-
-
-
 
 
         //Action Listener para buscar las fotografias asignadas a cada fotografo
@@ -103,12 +85,24 @@ public class VisualizadorFotos extends JFrame {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 String imagenSeleccionada = jList.getSelectedValue();
-                ImageIcon icon = new ImageIcon(mostrarFotografia(imagenSeleccionada,jcfotografos.getSelectedIndex()));
+                Fotografias f = devuelveFotografia(imagenSeleccionada,jcfotografos.getSelectedIndex());
+                ImageIcon icon = new ImageIcon(f.getArchivo());
                 imagen.setIcon(icon);
+                incrementarVisitas(devuelveFotografia(imagenSeleccionada,jcfotografos.getSelectedIndex()));
 
             }
         });
 
+        //ADD
+
+        fotografos.add(jlfotografos);
+        fotografos.add(jcfotografos);
+        jFrame.add(fotografos);
+
+
+        fecha.add(jlfotos);
+        fecha.add(date);
+        jFrame.add(fecha);
 
 
         lista.add(scrollPane);
@@ -130,6 +124,8 @@ public class VisualizadorFotos extends JFrame {
         visualizadorFotos();
     }
 
+    //METODOS
+
     //Obtener lista de todos los fotogrados de la DB
     public static ArrayList<Fotografo> listaFotografos() {
         conexion conexion = new conexion();
@@ -147,12 +143,9 @@ public class VisualizadorFotos extends JFrame {
 
                 ALfotografos.add(f);
             }
-
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
         return ALfotografos;
     }
 
@@ -177,26 +170,58 @@ public class VisualizadorFotos extends JFrame {
         return ALreturn;
     }
 
-    //Devuelve la direccion de la imagen seleccionada (P.ej: "img/foto.jpg")
-    public static String mostrarFotografia(String nombreFoto,int idFotografo) {
-        String img="";
+
+    //Devuelve objeto Fotografia
+    public static Fotografias devuelveFotografia(String nombreFoto,int idFotografo) {
+        Fotografias f = null;
         conexion conexion = new conexion();
         Connection conn = conexion.MyConexion();
-        try (PreparedStatement select = conn.prepareStatement("SELECT fichero from fotos where titulo = ? AND IDfotografo = ?")){
+        try (PreparedStatement select = conn.prepareStatement("SELECT * from fotos where titulo = ? AND IDfotografo = ?")){
             select.setNString(1,nombreFoto);
             select.setInt(2,idFotografo);
             ResultSet res = select.executeQuery();
 
             //Sin el if da error
             if (res.next()) {
-                img = res.getString("fichero");
+                int ID = res.getInt("IDfoto");
+                String titulo = res.getString("titulo");
+                Date fecha = res.getDate("fecha");
+                String fichero = res.getString("fichero");
+                int visitas = res.getInt("visitas");
+                int IDfotografo = res.getInt("IDfotografo");
+                
+                f = new Fotografias(ID,titulo,fecha,fichero,visitas,IDfotografo);
+                
             }
         } catch (SQLException e) {
             e.printStackTrace();
             System.err.println("ERROR: MOSTRAR FOTOGRAFIA");
         }
-        return img;
+        return f;
+    }
+
+    //Hace +1 a las visitas
+    public static void incrementarVisitas(Fotografias f) {
+        int ID = f.getIdFoto();
+        conexion conexion = new conexion();
+        Connection conn = conexion.MyConexion();
+
+        try(PreparedStatement select = conn.prepareStatement("SELECT visitas from fotos where IDfoto = ?")) {
+            select.setInt(1,ID);
+            ResultSet res1 = select.executeQuery();
+            if (res1.next()) {
+                int visitas = res1.getInt("visitas") + 1;
+
+                try(PreparedStatement update = conn.prepareStatement("UPDATE fotos SET visitas = ? where IDfoto = ?")) {
+                    update.setInt(1,visitas);
+                    update.setInt(2,ID);
+                    update.executeUpdate();
+                } catch (SQLException r) {
+                    r.printStackTrace();
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
-
-
