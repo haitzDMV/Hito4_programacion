@@ -1,8 +1,7 @@
 import org.jdesktop.swingx.JXDatePicker;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,7 +30,6 @@ public class VisualizadorFotos extends JFrame {
         ArrayList<Fotografo> f = listaFotografos();
         for (Fotografo e: f) {
             jcfotografos.addItem(e.getNombre());
-            System.out.println(e.getNombre() + " | " + e.getIdFotografo() + " | " + e.getPremiado());
         }
 
 
@@ -45,11 +43,18 @@ public class VisualizadorFotos extends JFrame {
 
         JPanel fecha = new JPanel();
         JLabel jlfotos = new JLabel("Photos after:");
-        JXDatePicker date = new JXDatePicker();
-        date.setDate(new Date(11-5-2001)); //Para que no de error
-        Date fechaSelec=  date.getDate();
+        JXDatePicker date = new JXDatePicker(new Date());
+        //date.setDate(new Date(124, 4, 11)); //Para que no de error
         SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy");
-        String fechaSeleccionada = formatoFecha.format(fechaSelec);
+
+
+        Date fechaSelec = date.getDate();
+        java.sql.Date fechaSQL = new java.sql.Date(fechaSelec.getTime());
+
+        date.addActionListener();
+
+
+
 
 
 
@@ -76,7 +81,7 @@ public class VisualizadorFotos extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 model.clear();
-                ArrayList<String> a = buscarFotografias(jcfotografos.getSelectedIndex());
+                ArrayList<String> a = buscarFotografias(jcfotografos.getSelectedIndex(),fechaSQL);
                 for (String fotos: a) {
                     model.addElement(fotos);
                 }
@@ -85,6 +90,7 @@ public class VisualizadorFotos extends JFrame {
 
         JPanel panelImagen = new JPanel();
         JLabel imagen = new JLabel();
+        imagen.setPreferredSize(new Dimension(100,100));
 
         //Action Listener para mostrar la imagen seleccionada
         jList.addListSelectionListener(new ListSelectionListener() {
@@ -145,12 +151,14 @@ public class VisualizadorFotos extends JFrame {
     }
 
     //Obtener fotografias de un fotografo
-    public static ArrayList<String> buscarFotografias(int idFotografo) {
+    public static ArrayList<String> buscarFotografias(int idFotografo,Date fecha) {
         ArrayList<String> ALreturn =new ArrayList<>();
         conexion conexion = new conexion();
         Connection conn=conexion.MyConexion();
-        try(PreparedStatement select = conn.prepareStatement("SELECT * from fotos where IDfotografo = ?")) {
+        System.out.println(fecha);
+        try(PreparedStatement select = conn.prepareStatement("SELECT * from fotos where IDfotografo = ? AND fecha < ?")) {
             select.setInt(1,idFotografo);
+            select.setDate(2, (java.sql.Date) fecha);
             ResultSet res = select.executeQuery();
             while (res.next()) {
                 String titulo = res.getString("titulo");
@@ -172,7 +180,11 @@ public class VisualizadorFotos extends JFrame {
             select.setNString(1,nombreFoto);
             select.setInt(2,idFotografo);
             ResultSet res = select.executeQuery();
-            img = res.getString("fichero");
+            if (res.next()) {
+                img = res.getString("fichero");
+            }
+
+            //img = "img/ansealdams1.jpg";
         } catch (SQLException e) {
             e.printStackTrace();
             System.err.println("ERROR: MOSTRAR FOTOGRAFIA");
