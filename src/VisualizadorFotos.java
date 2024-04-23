@@ -31,6 +31,11 @@ public class VisualizadorFotos extends JFrame {
         }
 
 
+        fotografos.add(jlfotografos);
+        fotografos.add(jcfotografos);
+        jFrame.add(fotografos);
+
+
         //Jpanel donde estará el calendario
         JPanel fecha = new JPanel();
         JLabel jlfotos = new JLabel("Photos after:");
@@ -43,14 +48,19 @@ public class VisualizadorFotos extends JFrame {
         ActionListener l = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (JXDatePicker.COMMIT_KEY.equals(e.getActionCommand())) {
-                    System.out.println(date.getDate());
                     date.setDate(date.getDate());
                     Date fechaSelec = date.getDate();
                     fechaSQL[0] = new java.sql.Date(fechaSelec.getTime());
                 }
             }
         };
+
         date.addActionListener(l);
+
+
+        fecha.add(jlfotos);
+        fecha.add(date);
+        jFrame.add(fecha);
 
 
         //JPanel para la lista de las fotografias
@@ -93,16 +103,6 @@ public class VisualizadorFotos extends JFrame {
             }
         });
 
-        //ADD
-
-        fotografos.add(jlfotografos);
-        fotografos.add(jcfotografos);
-        jFrame.add(fotografos);
-
-
-        fecha.add(jlfotos);
-        fecha.add(date);
-        jFrame.add(fecha);
 
 
         lista.add(scrollPane);
@@ -154,7 +154,6 @@ public class VisualizadorFotos extends JFrame {
         ArrayList<String> ALreturn =new ArrayList<>();
         conexion conexion = new conexion();
         Connection conn=conexion.MyConexion();
-        System.out.println(fecha);
         try(PreparedStatement select = conn.prepareStatement("SELECT * from fotos where IDfotografo = ? AND fecha < ?")) {
             select.setInt(1,idFotografo);
             select.setDate(2, (java.sql.Date) fecha);
