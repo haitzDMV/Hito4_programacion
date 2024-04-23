@@ -51,7 +51,7 @@ public class VisualizadorFotos extends JFrame {
         Date fechaSelec = date.getDate();
         java.sql.Date fechaSQL = new java.sql.Date(fechaSelec.getTime());
 
-        date.addActionListener();
+        //date.addActionListener();
 
 
 
